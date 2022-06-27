@@ -89,7 +89,9 @@ ukm = mean_calc(km)
 std = std_calc(ukm, km)
 
 # teta0 = teta0 - (ukm/std) * teta1
-teta1 = teta1 / std
+# teta1 = teta1 / std
+
+# teta1 = teta1 / std
 
 
 
@@ -98,11 +100,11 @@ print("teta0 = " + str(teta0) + "       teta1 = " + str(teta1))
 # teta1 *= max(km)
 # print("teta0 = " + str(teta0) + "       teta1 = " + str(teta1))
 
-x = np.linspace(0, 20000, 20000)
+x = np.linspace(0, 2, 2)
 y = teta0 + teta1 * x
 plt.plot(x, y, '-r', label='price = teta0 + teta1 * km')
 
-plt.plot(km, prices, 'ro')
+plt.plot(d_km, prices, 'ro')
 plt.ylabel('price')
 plt.xlabel('km')
 plt.show()

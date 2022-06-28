@@ -8,7 +8,6 @@ d_prices = []
 km = []
 d_km = []
 iteration = 1000
-
 Lr = 0.1
 
 def read_data():
@@ -24,6 +23,11 @@ def read_data():
   outfile.close()
   return (km, prices)
 
+def write_data(new_theta0, new_theta1):
+  file = open("thetas.csv","w")
+  file.write("theta0," + str(new_theta0) + '\n' + "theta1," + str(new_theta1) + '\n')
+  file.close()
+
 def scale_down(km):
   i = 0
   d_km = []
@@ -36,24 +40,19 @@ def training(km, prices, iteration):
   LR_m = Lr/len(km)
   theta0 = 0
   theta1 = 0
-
   j = 0
   while j < iteration:
     sum0 = 0
     sum1 = 0
-
     i = 0
     while i < len(km):
       sum0 += (theta0 + theta1 * km[i]) - prices[i]
       sum1 += ((theta0 + theta1 * km[i]) - prices[i]) * km[i]
       i += 1
-
     tmptheta0 = LR_m * sum0
     tmptheta1 = LR_m * sum1
-
     theta0 -= tmptheta0
     theta1 -= tmptheta1
-
     j += 1
   return (theta0, theta1)
 
@@ -84,6 +83,7 @@ def error_calc(prices, km, new_theta0, new_theta1):
 d_km = scale_down(km)
 [theta0, theta1] = training(d_km, prices, iteration)
 [new_theta0, new_theta1] = descale_thetas(km, theta0, theta1)
+write_data(new_theta0, new_theta1)
 error = error_calc(prices, km, new_theta0, new_theta1)
 
 plt.text(max(km) * 0.7,max(prices) * 0.9,'Error : ' + str(error))

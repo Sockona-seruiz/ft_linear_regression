@@ -1,3 +1,4 @@
+from hashlib import new
 import numpy as np
 import math 
 import matplotlib.pyplot as plt
@@ -32,6 +33,14 @@ def scale_down(km):
     i += 1
   return (d_km, a_max)
 
+def scale_down_2(km):
+  i = 0
+  d_km = []
+  while (i < len(km)):
+    d_km.append((float(km[i]) - float(min(km))) / (float(max(km)) - float(min(km))))
+    i += 1
+  return (d_km, 1)
+
 def training(km, prices, iteration):
   LR_m = Lr/len(km)
   teta0 = 0
@@ -60,7 +69,7 @@ def training(km, prices, iteration):
 [km, prices] = read_data()
 
 a_max = 0
-[d_km, a_max] = scale_down(km)
+[d_km, a_max] = scale_down_2(km)
 
 # [teta0, teta1] = training(d_km, d_prices, iteration)
 [teta0, teta1] = training(d_km, prices, iteration)
@@ -93,18 +102,42 @@ std = std_calc(ukm, km)
 
 # teta1 = teta1 / std
 
+# range = max(km) - min(km)
+# teta1 = teta1 * range
 
+normd =  (float(22899) - float(min(km))) / (float(max(km)) - float(min(km)))
+test = teta0 + teta1 * normd
+print("test = " + str(test))
+
+def get_coef_equation(km, teta0, teta1):
+  # On calcule deux points de la droite
+  km0 =  (float(min(km)) - float(min(km))) / (float(max(km)) - float(min(km)))
+  p0 = teta0 + teta1 * km0
+  print("min km = " + str(min(km)) + "    price = " + str(p0))
+  km1 =  (float(max(km)) - float(min(km))) / (float(max(km)) - float(min(km)))
+  p1 = teta0 + teta1 * km1
+  print("max km price = " + str(p1))
+  new_teta1 = (p1 - p0) / (max(km) - min(km))
+  new_teta0 = (float(0) - float(min(km))) / (float(max(km)) - float(min(km)))
+  new_teta0 = teta0 + teta1 * new_teta0
+  print("res = " + str(new_teta1))
+  return (new_teta0, new_teta1)
 
 print("teta0 = " + str(teta0) + "       teta1 = " + str(teta1))
 # teta0 *= max(prices)
 # teta1 *= max(km)
 # print("teta0 = " + str(teta0) + "       teta1 = " + str(teta1))
 
-x = np.linspace(0, 2, 2)
-y = teta0 + teta1 * x
+[new_teta0, new_teta1] = get_coef_equation(km, teta0, teta1)
+print("teta1 = " + str(teta1))
+print("new_teta1 = " + str(new_teta1))
+
+x = np.linspace(0, 200000, 200000)
+y = new_teta0 + new_teta1 * x
+# y = teta0 + teta1 * x
 plt.plot(x, y, '-r', label='price = teta0 + teta1 * km')
 
-plt.plot(d_km, prices, 'ro')
+plt.plot(km, prices, 'ro')
 plt.ylabel('price')
 plt.xlabel('km')
 plt.show()

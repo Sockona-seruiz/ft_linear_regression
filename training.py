@@ -10,6 +10,7 @@ d_km = []
 iteration = 1000
 
 Lr = 0.1
+
 def read_data():
   outfile = open("data.csv","r")
   data = outfile.readlines()
@@ -24,27 +25,17 @@ def read_data():
   return (km, prices)
 
 def scale_down(km):
-  a_max = max(km)
-  i = 0
-  d_km = []
-  while i < len(km):
-    d_km.append(km[i] / a_max)
-    print("d_km = " + str(d_km[i]) + "    km = " + str(km[i]) )
-    i += 1
-  return (d_km, a_max)
-
-def scale_down_2(km):
   i = 0
   d_km = []
   while (i < len(km)):
     d_km.append((float(km[i]) - float(min(km))) / (float(max(km)) - float(min(km))))
     i += 1
-  return (d_km, 1)
+  return (d_km)
 
 def training(km, prices, iteration):
   LR_m = Lr/len(km)
-  teta0 = 0
-  teta1 = 0
+  theta0 = 0
+  theta1 = 0
 
   j = 0
   while j < iteration:
@@ -53,89 +44,52 @@ def training(km, prices, iteration):
 
     i = 0
     while i < len(km):
-      sum0 += (teta0 + teta1 * km[i]) - prices[i]
-      sum1 += ((teta0 + teta1 * km[i]) - prices[i]) * km[i]
+      sum0 += (theta0 + theta1 * km[i]) - prices[i]
+      sum1 += ((theta0 + theta1 * km[i]) - prices[i]) * km[i]
       i += 1
 
-    tmpteta0 = LR_m * sum0
-    tmpteta1 = LR_m * sum1
+    tmptheta0 = LR_m * sum0
+    tmptheta1 = LR_m * sum1
 
-    teta0 -= tmpteta0
-    teta1 -= tmpteta1
+    theta0 -= tmptheta0
+    theta1 -= tmptheta1
 
     j += 1
-  return (teta0, teta1)
+  return (theta0, theta1)
 
-[km, prices] = read_data()
-
-a_max = 0
-[d_km, a_max] = scale_down_2(km)
-
-# [teta0, teta1] = training(d_km, d_prices, iteration)
-[teta0, teta1] = training(d_km, prices, iteration)
-
-def mean_calc(km):
-  i = 0
-  sum = 0
-  while (i < len(km)):
-    sum += km[i]
-    i += 1
-  mean = sum / i
-  return (mean)
-
-def std_calc(mean, km):
-  i = 0
-  std = 0
-  while (i < len(km)):
-    std += pow((km[i] - mean), 2)
-    i += 1
-  std = std / i
-  std = math.sqrt(std)
-  return (std)
-
-ukm = mean_calc(km)
-
-std = std_calc(ukm, km)
-
-# teta0 = teta0 - (ukm/std) * teta1
-# teta1 = teta1 / std
-
-# teta1 = teta1 / std
-
-# range = max(km) - min(km)
-# teta1 = teta1 * range
-
-normd =  (float(22899) - float(min(km))) / (float(max(km)) - float(min(km)))
-test = teta0 + teta1 * normd
-print("test = " + str(test))
-
-def get_coef_equation(km, teta0, teta1):
+def descale_thetas(km, theta0, theta1):
   # On calcule deux points de la droite
   km0 =  (float(min(km)) - float(min(km))) / (float(max(km)) - float(min(km)))
-  p0 = teta0 + teta1 * km0
-  print("min km = " + str(min(km)) + "    price = " + str(p0))
+  p0 = theta0 + theta1 * km0
   km1 =  (float(max(km)) - float(min(km))) / (float(max(km)) - float(min(km)))
-  p1 = teta0 + teta1 * km1
-  print("max km price = " + str(p1))
-  new_teta1 = (p1 - p0) / (max(km) - min(km))
-  new_teta0 = (float(0) - float(min(km))) / (float(max(km)) - float(min(km)))
-  new_teta0 = teta0 + teta1 * new_teta0
-  print("res = " + str(new_teta1))
-  return (new_teta0, new_teta1)
+  p1 = theta0 + theta1 * km1
+  # On calcule le coef directeur
+  new_theta1 = (p1 - p0) / (max(km) - min(km))
+  # On calcule l'ordonne a l'origine
+  new_theta0 = (float(0) - float(min(km))) / (float(max(km)) - float(min(km)))
+  new_theta0 = theta0 + theta1 * new_theta0
+  return (new_theta0, new_theta1)
 
-print("teta0 = " + str(teta0) + "       teta1 = " + str(teta1))
-# teta0 *= max(prices)
-# teta1 *= max(km)
-# print("teta0 = " + str(teta0) + "       teta1 = " + str(teta1))
+def error_calc(prices, km, new_theta0, new_theta1):
+  i = 0
+  error = 0
+  while (i < len(prices)):
+    error += (prices[i] - (new_theta0 + new_theta1 * km[i])) ** 2
+    i += 1
+  error = error / len(prices)
+  error = math.sqrt(error)
+  return (error)
 
-[new_teta0, new_teta1] = get_coef_equation(km, teta0, teta1)
-print("teta1 = " + str(teta1))
-print("new_teta1 = " + str(new_teta1))
+[km, prices] = read_data()
+d_km = scale_down(km)
+[theta0, theta1] = training(d_km, prices, iteration)
+[new_theta0, new_theta1] = descale_thetas(km, theta0, theta1)
+error = error_calc(prices, km, new_theta0, new_theta1)
 
-x = np.linspace(0, 200000, 200000)
-y = new_teta0 + new_teta1 * x
-# y = teta0 + teta1 * x
-plt.plot(x, y, '-r', label='price = teta0 + teta1 * km')
+plt.text(max(km) * 0.7,max(prices) * 0.9,'Error : ' + str(error))
+x = np.linspace(min(km), max(km), max(km) - min(km))
+y = new_theta0 + new_theta1 * x
+plt.plot(x, y, '-b', label='price = theta0 + theta1 * km')
 
 plt.plot(km, prices, 'ro')
 plt.ylabel('price')

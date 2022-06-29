@@ -11,20 +11,30 @@ iteration = 1000
 Lr = 0.1
 
 def read_data():
-  outfile = open("data.csv","r")
+  try:
+    outfile = open("data.csv", "r")
+  except IOError:
+    return (-2, -1)
+
   data = outfile.readlines()
   # File parsing arranged int two arrays
   for line in data:
     if 'km' not in line:
         words = line.split(",")
-        words[1] =words[1][:-1]
-        km.append(float(words[0]))
-        prices.append(float(words[1]))
+        if (len(words) == 2 and (words[0] != "" and words[0] != '\n') and (words[1] != "" and words[1] != '\n')):
+          km.append(float(words[0]))
+          prices.append(float(words[1]))
+        else:
+          return (-1, -1)
   outfile.close()
   return (km, prices)
 
 def write_data(new_theta0, new_theta1):
-  file = open("thetas.csv","w")
+  try:
+    file = open("thetas.csv", "w")
+  except IOError:
+     print ("Error: permission denied: 'thetas.csv'. No data written")
+     return
   file.write("theta0," + str(new_theta0) + '\n' + "theta1," + str(new_theta1) + '\n')
   file.close()
 
@@ -79,19 +89,31 @@ def error_calc(prices, km, new_theta0, new_theta1):
   error = math.sqrt(error)
   return (error)
 
-[km, prices] = read_data()
-d_km = scale_down(km)
-[theta0, theta1] = training(d_km, prices, iteration)
-[new_theta0, new_theta1] = descale_thetas(km, theta0, theta1)
-write_data(new_theta0, new_theta1)
-error = error_calc(prices, km, new_theta0, new_theta1)
 
-plt.text(max(km) * 0.7,max(prices) * 0.9,'Error : ' + str(error))
-x = np.linspace(min(km), max(km), max(km) - min(km))
-y = new_theta0 + new_theta1 * x
-plt.plot(x, y, '-b', label='price = theta0 + theta1 * km')
+def main():
+  [km, prices] = read_data()
+  if (km == -1):
+    print("data.csv is crrupted")
+    return
+  elif (km == -2):
+    print ("Error: no such file: 'data.csv'")
+    return
 
-plt.plot(km, prices, 'ro')
-plt.ylabel('price')
-plt.xlabel('km')
-plt.show()
+  d_km = scale_down(km)
+  [theta0, theta1] = training(d_km, prices, iteration)
+  [new_theta0, new_theta1] = descale_thetas(km, theta0, theta1)
+  write_data(new_theta0, new_theta1)
+  error = error_calc(prices, km, new_theta0, new_theta1)
+
+  plt.text(max(km) * 0.7,max(prices) * 0.9,'Error : ' + str(error))
+  x = np.linspace(min(km), max(km), max(km) - min(km))
+  y = new_theta0 + new_theta1 * x
+  plt.plot(x, y, '-b', label='price = theta0 + theta1 * km')
+
+  plt.plot(km, prices, 'ro')
+  plt.ylabel('price')
+  plt.xlabel('km')
+  plt.show()
+  return
+
+main()
